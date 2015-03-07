@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Socket.io Client</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="Cache-Control" content="no-siteapp" />
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="css/amazeui.min.css"/>
+    <style>
+        @media only screen and (min-width: 641px) {
+            .am-offcanvas {
+                display: block;
+                position: static;
+                background: none;
+            }
+
+            .am-offcanvas-bar {
+                position: static;
+                width: auto;
+                background: none;
+                -webkit-transform: translate3d(0, 0, 0);
+                -ms-transform: translate3d(0, 0, 0);
+                transform: translate3d(0, 0, 0);
+            }
+            .am-offcanvas-bar:after {
+                content: none;
+            }
+
+        }
+
+        @media only screen and (max-width: 640px) {
+            .am-offcanvas-bar .am-nav>li>a {
+                color:#ccc;
+                border-radius: 0;
+                border-top: 1px solid rgba(0,0,0,.3);
+                box-shadow: inset 0 1px 0 rgba(255,255,255,.05)
+            }
+
+            .am-offcanvas-bar .am-nav>li>a:hover {
+                background: #404040;
+                color: #fff
+            }
+
+            .am-offcanvas-bar .am-nav>li.am-nav-header {
+                color: #777;
+                background: #404040;
+                box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+                text-shadow: 0 1px 0 rgba(0,0,0,.5);
+                border-top: 1px solid rgba(0,0,0,.3);
+                font-weight: 400;
+                font-size: 75%
+            }
+
+            .am-offcanvas-bar .am-nav>li.am-active>a {
+                background: #1a1a1a;
+                color: #fff;
+                box-shadow: inset 0 1px 3px rgba(0,0,0,.3)
+            }
+
+            .am-offcanvas-bar .am-nav>li+li {
+                margin-top: 0;
+            }
+        }
+
+        .my-head {
+            margin-top: 40px;
+            text-align: center;
+        }
+
+        .my-button {
+            position: fixed;
+            top: 0;
+            right: 0;
+            border-radius: 0;
+        }
+        .my-sidebar {
+            padding-right: 0;
+            border-right: 1px solid #eeeeee;
+        }
+
+        .my-footer {
+            border-top: 1px solid #eeeeee;
+            padding: 10px 0;
+            margin-top: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<header class="am-g my-head">
+    <div class="am-u-sm-12 am-article">
+        <h1 class="am-article-title">Socket.IO Client</h1>
+        <p class="am-article-meta">by scaret</p>
+    </div>
+</header>
+<hr class="am-article-divider"/>
+<div class="am-g am-g-fixed">
+    <div class="am-u-md-8 am-u-md-push-4">
+        <div class="am-panel-group" data-bind ="foreach: {data: messages, as: 'msg'}">
+            <section class=""  data-bind="attr: {id: msg.id, class: 'am-panel am-panel-' + msg.client.themes[client.themeIndex()].amType}">
+                <header class="am-panel-hd">
+                    <span data-bind="text: msg.topic"></span>
+                    <span data-bind="text: msg.client.url" style="float:right"></span>
+                </header>
+                <main class="am-panel-bd" data-bind="text: msg.payloadStr" style="white-space: pre-wrap;"></main>
+                <div class="am-panel-footer">
+                    <span>From Client</span>
+                    <span data-bind="text: msg.client.id"></span>
+                    <!--<span>, Socket</span>
+                    <span data-bind="text: msg.client.socket.id"></span>
+                    -->
+                    <span data-bind="text: moment(msg.timestamp).from(manager.now())" style="float:right;"></span>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <div class="am-u-md-4 am-u-md-pull-8 my-sidebar">
+        <button class="am-btn am-btn-secondary am-btn-lg" data-am-modal="{target: '#add-client-popup'}">Add a Client</button>
+
+        <div class="am-panel-group" id="clients" data-bind="foreach: {data: clients, as: 'client', afterRender: afterRender}">
+            <div data-bind="attr: {id: client.id, class:'am-panel am-panel-' +client.themes[client.themeIndex()].amType}">
+                <div class="am-panel-hd">
+                    <h4 class="am-panel-title">
+                        <a data-bind="text: client.url, attr:{href: client.url}" target="_blank"></a>
+                        <a href="javascript: void(0);" style="float:right"><span data-bind="attr: {class:'client-toggle am-badge am-round am-badge-' + (client.connect? 'success' : 'danger')}">⬇</span></a>
+                    </h4>
+                </div>
+                <div id="do-not-say-1" class="am-panel-collapse am-collapse am-in">
+                    <div class="am-panel-bd">
+                        <table class="am-table am-table-bordered am-table-radius">
+                            <tr>
+                                <td>Status</td>
+                                <td>
+                                    <span data-bind="text: client.status, attr: {class:'am-badge am-badge-' + (client.connected() ? 'success' : 'danger')}"></span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Socket ID</td>
+                                <td data-bind="text: client.socketId" style="word-break: break-all"></td>
+                            </tr>
+                            <tr>
+                                <td>Theme</td>
+                                <td>
+                                    <select class="theme" data-bind="options: themes, optionsText: 'caption', optionsValue: 'index', value: client.themeIndex"></select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Subscribed Topics</td>
+                                <td>
+                                    <ul data-bind="foreach: {data: client.topics, as: 'topic'}">
+                                        <li data-bind="text: topic"></li>
+                                    </ul>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td >New Topic</td>
+                                <td>
+                                    <input type="text" size="12" class="new-topic" data-bind="event:{keypress: onEditTopic}"/>
+                                </td>
+                            </tr>
+                            <tr data-bind="visible: client.connected">
+                                <td colspan="2">
+                                    <form class="am-form add-message">
+                                        <fieldset class="am-form-set">
+                                            <input type="text" class="add-message-topic am-form-field am-btn-sm" placeholder="Topic:" data-bind="value:client.newTopicFromUI">
+                                            <textarea type="text" class="add-message-payload am-form-field" placeholder="Send a Message Here..." data-bind="value: client.newPayloadFromUI"></textarea>
+                                        </fieldset>
+                                        <button class="am-btn am-btn-default add-message-submit" data-bind="click: client.emitMessage.bind(client)">Send</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <a href="#sidebar" class="am-btn am-btn-sm am-btn-success am-icon-bars am-show-sm-only my-button" data-am-offcanvas><span class="am-sr-only">侧栏导航</span></a>
+    </div>
+</div>
+
+<div class="am-popup" id="add-client-popup">
+    <div class="am-popup-inner">
+        <div class="am-popup-hd">
+            <h4 class="am-popup-title">Add a Client</h4>
+            <span data-am-modal-close class="am-close">&times;</span>
+        </div>
+        <div class="am-popup-bd">
+            <form class="am-form" data-am-validator id="add-client-form">
+                <fieldset>
+                    <legend data-bind="attr: {class: 'am-text-lg am-badge am-badge-' + clientToAdd().themes[clientToAdd().themeIndex()].amType}">Add a Client</legend>
+                    <div class="am-form-group">
+                        <label for="add-client-type">Type</label>
+                        <select data-am-selected id="add-client-type" data-bind="value: clientToAdd().type" required>
+                            <option value="Socket IO" selected>Socket IO</option>
+                        </select>
+                    </div>
+                    <div class="am-form-group">
+                        <label for="add-client-url">URL</label>
+                        <input type="url" id="add-client-url" data-bind="value: clientToAdd().url" required/>
+                    </div>
+                    <div class="am-form-group">
+                        <label for="add-client-topics">Subscribed Topics(Seprated with Comma)</label>
+                        <input type="text" id="add-client-topics" required data-bind="value: clientToAdd().topics().join()"/>
+                    </div>
+                    <div class="am-form-group">
+                        <label for="add-client-theme">Theme</label>
+                        <select id="add-client-theme" class="theme" data-bind="options: clientToAdd().themes, optionsText: 'caption', optionsValue: 'index', value: clientToAdd().themeIndex"></select>
+                    </div>
+                    <button class="am-btn am-btn-secondary" type="submit">Submit</button>
+                </fieldset>
+            </form>
+        </div>
+    </div>
+</div>
+
+<footer class="my-footer">
+    <p>Socket.IO Client by <a href="http://scaret.in">scaret</a> </p>
+</footer>
+
+<!--[if lt IE 9]>
+<script src="http://libs.baidu.com/jquery/1.11.1/jquery.min.js"></script>
+<script src="http://cdn.staticfile.org/modernizr/2.8.3/modernizr.js"></script>
+<script src="js/polyfill/rem.min.js"></script>
+<script src="js/polyfill/respond.min.js"></script>
+<script src="js/amazeui.legacy.js"></script>
+<![endif]-->
+
+<!--[if (gte IE 9)|!(IE)]><!-->
+<script src="js/jquery.min.js"></script>
+<script src="js/amazeui.min.js"></script>
+<!--<![endif]-->
+
+<script src="js/knockout-3.3.0.js"></script>
+<script src="js/moment.min.js"></script>
+<script src="js/socket.io.js"></script>
+<script src="js/socket-io-client.js"></script>
+<div id="temp-client" style="display: none;">
+    <form class="am-form">
+        <fieldset class="am-form-set">
+            <input type="text" class="clientId" disabled placeholder="Client ID">
+            <input type="text" class="status"   disabled placeholder="status">
+            <input type="text" class="socketId" disabled placeholder="socket ID">
+        </fieldset>
+    </form>
+</div>
+
+</body>
+</html>
